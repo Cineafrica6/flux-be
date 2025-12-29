@@ -52,17 +52,28 @@ export const turnController = {
 
             const data = JSON.parse(responseText);
 
-            // Validate the response has iceServers array
-            if (!data.iceServers || !Array.isArray(data.iceServers) || data.iceServers.length === 0) {
+            // Cloudflare returns iceServers as an OBJECT, but RTCPeerConnection expects an ARRAY
+            // Transform: {iceServers: {urls, username, credential}} -> {iceServers: [{urls, username, credential}]}
+            let iceServersArray;
+
+            if (data.iceServers && !Array.isArray(data.iceServers)) {
+                // It's an object - wrap it in an array
+                iceServersArray = [data.iceServers];
+                logger.info('Transformed Cloudflare iceServers object to array');
+            } else if (Array.isArray(data.iceServers) && data.iceServers.length > 0) {
+                // It's already an array
+                iceServersArray = data.iceServers;
+            } else {
                 logger.warn('Cloudflare returned invalid iceServers, using fallback', { data });
                 return res.json(FALLBACK_ICE_SERVERS);
             }
 
             logger.info('Generated TURN credentials successfully', {
-                serverCount: data.iceServers.length
+                serverCount: iceServersArray.length,
+                urls: iceServersArray[0]?.urls
             });
 
-            res.json(data);
+            res.json({ iceServers: iceServersArray });
         } catch (error) {
             logger.error('Failed to get TURN credentials', { error });
             res.json(FALLBACK_ICE_SERVERS);
