@@ -4,6 +4,7 @@ import { env } from './config/environment.js';
 import { errorMiddleware } from './shared/middleware/error.middleware.js';
 import { sessionController } from './modules/session/session.controller.js';
 import { matchingController } from './modules/matching/matching.controller.js';
+import { turnController } from './modules/turn/turn.controller.js';
 
 export const createApp = (): Application => {
     const app = express();
@@ -30,6 +31,7 @@ export const createApp = (): Application => {
     // API routes
     app.get('/api/stats/sessions', sessionController.getStats);
     app.get('/api/stats/queue', matchingController.getQueueStats);
+    app.get('/api/turn/credentials', turnController.getCredentials);
 
     // 404 handler
     app.use((req: Request, res: Response) => {
