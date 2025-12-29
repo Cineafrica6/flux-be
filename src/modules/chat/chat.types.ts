@@ -8,6 +8,8 @@ export interface IChatMessage {
 export interface SendMessagePayload {
     message: string;
     targetId: string;
+    type?: 'text' | 'gif';
+    gifUrl?: string;
 }
 
 export interface TypingPayload {

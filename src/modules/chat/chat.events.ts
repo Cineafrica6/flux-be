@@ -32,6 +32,8 @@ export const registerChatEvents = (io: Server, socket: Socket): void => {
                 message: payload.message.trim(),
                 senderId: socket.id,
                 timestamp: Date.now(),
+                type: payload.type || 'text',
+                gifUrl: payload.gifUrl,
             });
 
             logger.debug('Chat message sent', { from: socket.id, to: payload.targetId });
