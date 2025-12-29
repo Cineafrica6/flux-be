@@ -1,5 +1,6 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import { env } from './config/environment.js';
 import { errorMiddleware } from './shared/middleware/error.middleware.js';
 import { sessionController } from './modules/session/session.controller.js';
@@ -18,6 +19,9 @@ const getAllowedOrigins = (): string[] => {
 
 export const createApp = (): Application => {
     const app = express();
+
+    // Enable gzip compression for all responses
+    app.use(compression());
 
     // Middleware - support multiple CORS origins
     const allowedOrigins = getAllowedOrigins();

@@ -83,6 +83,42 @@ class MatchingService {
         this.addToQueue(socketId);
         return this.tryMatch(socketId);
     }
+
+    /**
+     * Remove users from queue who have been waiting too long (stale)
+     * This prevents memory leaks from abandoned sessions
+     */
+    cleanupStaleQueueUsers(staleMinutes: number = 10): number {
+        const staleThreshold = Date.now() - staleMinutes * 60 * 1000;
+        let removedCount = 0;
+
+        for (const [socketId, user] of this.queue) {
+            if (user.joinedAt.getTime() < staleThreshold) {
+                this.queue.delete(socketId);
+                removedCount++;
+                logger.debug('Removed stale user from queue', { socketId });
+            }
+        }
+
+        if (removedCount > 0) {
+            logger.info('Queue cleanup completed', { removedCount, queueSize: this.queue.size });
+        }
+
+        return removedCount;
+    }
+
+    /**
+     * Start periodic queue cleanup
+     */
+    startQueueCleanupInterval(intervalMinutes: number = 5): NodeJS.Timeout {
+        const intervalMs = intervalMinutes * 60 * 1000;
+
+        logger.info('Starting queue cleanup interval', { intervalMinutes });
+
+        return setInterval(() => {
+            this.cleanupStaleQueueUsers(10);
+        }, intervalMs);
+    }
 }
 
 export const matchingService = new MatchingService();

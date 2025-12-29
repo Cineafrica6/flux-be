@@ -17,7 +17,7 @@ class SessionService {
     }
 
     async findBySocketId(socketId: string): Promise<SessionDocument | null> {
-        return Session.findOne({ socketId });
+        return Session.findOne({ socketId }).hint({ socketId: 1 });
     }
 
     async update(socketId: string, dto: UpdateSessionDto): Promise<SessionDocument | null> {
@@ -61,6 +61,42 @@ class SessionService {
 
     async getWaitingCount(): Promise<number> {
         return Session.countDocuments({ status: 'waiting' });
+    }
+
+    /**
+     * Cleanup stale sessions that haven't been active for specified minutes
+     * (beyond the MongoDB TTL index which handles 24-hour cleanup)
+     */
+    async cleanupStaleSessions(staleMinutes: number = 30): Promise<number> {
+        const staleThreshold = new Date(Date.now() - staleMinutes * 60 * 1000);
+
+        const result = await Session.deleteMany({
+            lastActiveAt: { $lt: staleThreshold },
+            status: { $in: ['idle', 'waiting'] }, // Only cleanup non-connected sessions
+        });
+
+        if (result.deletedCount > 0) {
+            logger.info('Cleaned up stale sessions', { count: result.deletedCount, staleMinutes });
+        }
+
+        return result.deletedCount;
+    }
+
+    /**
+     * Start periodic session cleanup (call once at server startup)
+     */
+    startCleanupInterval(intervalMinutes: number = 5): NodeJS.Timeout {
+        const intervalMs = intervalMinutes * 60 * 1000;
+
+        logger.info('Starting session cleanup interval', { intervalMinutes });
+
+        return setInterval(async () => {
+            try {
+                await this.cleanupStaleSessions(30);
+            } catch (error) {
+                logger.error('Session cleanup failed', { error });
+            }
+        }, intervalMs);
     }
 }
 

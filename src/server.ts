@@ -3,6 +3,8 @@ import { createApp } from './app.js';
 import { env, connectDatabase } from './config/index.js';
 import { initializeSocket } from './socket/index.js';
 import { logger } from './shared/utils/logger.js';
+import { sessionService } from './modules/session/session.service.js';
+import { matchingService } from './modules/matching/matching.service.js';
 
 const startServer = async (): Promise<void> => {
     try {
@@ -17,6 +19,10 @@ const startServer = async (): Promise<void> => {
 
         // Initialize Socket.IO
         const io = initializeSocket(httpServer);
+
+        // Start cleanup intervals (every 5 minutes)
+        sessionService.startCleanupInterval(5);
+        matchingService.startQueueCleanupInterval(5);
 
         // Start listening
         httpServer.listen(env.PORT, () => {
