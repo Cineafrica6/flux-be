@@ -6,6 +6,7 @@ import { errorMiddleware } from './shared/middleware/error.middleware.js';
 import { sessionController } from './modules/session/session.controller.js';
 import { matchingController } from './modules/matching/matching.controller.js';
 import { turnController } from './modules/turn/turn.controller.js';
+import { roomController } from './modules/room/room.controller.js';
 
 // Parse CORS origins - supports comma-separated list
 const getAllowedOrigins = (): string[] => {
@@ -56,6 +57,11 @@ export const createApp = (): Application => {
     app.get('/api/stats/sessions', sessionController.getStats);
     app.get('/api/stats/queue', matchingController.getQueueStats);
     app.get('/api/turn/credentials', turnController.getCredentials);
+
+    // Room routes (group calls)
+    app.get('/api/rooms', roomController.listRooms);
+    app.post('/api/rooms', roomController.createRoom);
+    app.get('/api/rooms/:roomId', roomController.getRoom);
 
     // 404 handler
     app.use((req: Request, res: Response) => {

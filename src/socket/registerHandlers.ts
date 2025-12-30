@@ -3,6 +3,7 @@ import { registerSessionEvents } from '../modules/session/session.events.js';
 import { registerMatchingEvents } from '../modules/matching/matching.events.js';
 import { registerSignalingEvents } from '../modules/signaling/signaling.events.js';
 import { registerChatEvents } from '../modules/chat/chat.events.js';
+import { registerRoomEvents } from '../modules/room/room.events.js';
 import { logger } from '../shared/utils/logger.js';
 
 export const registerSocketHandlers = (io: Server): void => {
@@ -14,6 +15,7 @@ export const registerSocketHandlers = (io: Server): void => {
         registerMatchingEvents(io, socket);
         registerSignalingEvents(io, socket);
         registerChatEvents(io, socket);
+        registerRoomEvents(io, socket);
 
         // Handle socket errors
         socket.on('error', (error) => {
